@@ -1,4 +1,5 @@
 const BASE_URL = "https://tsimobile.viarail.ca/data/allData.json"
+const fetch = require('node-fetch')
 const getAllData = ()=>{
 return fetch(BASE_URL, {
   method: "GET",
@@ -11,7 +12,7 @@ return fetch(BASE_URL, {
 const STATIONS = {
   VANCOUVER:{
     lat: 49.2736,
-    long: -120.0980
+    long: -123.1207
   },
   KAMLOOPS:{
     lat: 50.6786,
@@ -70,20 +71,56 @@ function assignInterval(longitude, direction){
     return 10*1000
   }
 }
+let interval = 3000
 
 async function queryViaRail(){
   const data = await getAllData()
-  const trainLongitude = data['1 (01-09)']['lng']
-  const trainDirection = data['1 (01-09)']['direction']
-  const interval = assignInterval(trainLongitude,)
+  console.log(data)
+  const trainLongitude = data['1 (01-20)']['lng']
+  const trainDirection = data['1 (01-20)']['direction']
+  const nextStation = getNextCity(trainLongitude, trainDirection)
+  console.log(trainLongitude)
+  interval = assignInterval(trainLongitude, trainDirection)
+  console.log(`Querying again in ${interval}`)
   return trainLongitude
+
+}
+
+// This function is buggy... fix it before proceeding
+function hasLeftStation(initialize = false, initialStation){
+  let hasLeft = initialize
+  let lastStation = initialStation
+
+  return (longitude, nextStation, dir) => {
+    let direction = dir
+    if(direction === 'WEST' && longitude < STATIONS[lastStation]['long']){
+      hasLeft = true
+    } else if(direction ==='EAST' && longitude > STATIONS[lastStation]['long']) {
+      hasLeft = true
+    } else {
+      hasLeft = false
+    }
+    return hasLeft
+  }
+}
+
+function hasArrived(longitude, nextCity, direction){
+  if((direction === 'WEST' && longitude > STATIONS[nextCity]['long']) || (direction ==='EAST' && longitude < STATIONS[nextCity]['long'])){
+    if(Math.abs(longitude - STATIONS[nextCity]['long']) < 0.001){
+      return true
+    } else {
+      return false
+    }
+  }
 }
 
 function main(){
-  const
-  const queryEveryThree = setInterval(queryViaRail, 3000)
+
+  const queryEveryThree = setInterval(queryViaRail, interval)
+
 }
 
+main()
 
 // (12-30)
 // :
